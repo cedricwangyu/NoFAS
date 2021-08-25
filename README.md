@@ -1,4 +1,5 @@
-# Normalizing Flow for Circuit Model RC
+# NoFAS:
+Variational Inference with NoFAS: Normalizing Flow with Adaptive Surrogate for Computationally Expensive Models
 
 Enabling MAF on Circuit Model RC and RCR (under construction) with PyTorch.
 
