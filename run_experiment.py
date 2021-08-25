@@ -18,35 +18,31 @@ start_time = time.time()
 
 # Settings
 exp = experiment()
-exp.flow_type = 'realnvp'                   # str: Type of flow                                 default 'maf'
-exp.n_blocks = 15 #64                       # int: Number of layers                             default 64
-exp.hidden_size = 100 #32                    # int: Hidden layer size for MADE in each layer     default 32
-exp.n_hidden = 1                        # int: Number of hidden layers in each MADE         default 1
-exp.activation_fn = 'relu'              # str: Actication function used                     default 'relu'
-exp.input_order = 'sequential'          # str: Input order for create_mask                  default 'sequential'
-exp.batch_norm_order = True             # boo: Order to decide if batch_norm is used        default True
+exp.flow_type           = 'realnvp'             # str: Type of flow                                 default 'realnvp'
+exp.n_blocks            = 15                    # int: Number of layers                             default 5
+exp.hidden_size         = 100                   # int: Hidden layer size for MADE in each layer     default 100
+exp.n_hidden            = 1                     # int: Number of hidden layers in each MADE         default 1
+exp.activation_fn       = 'relu'                # str: Actication function used                     default 'relu'
+exp.input_order         = 'sequential'          # str: Input order for create_mask                  default 'sequential'
+exp.batch_norm_order    = True                  # boo: Order to decide if batch_norm is used        default True
 
-exp.input_size = 5                      # int: Dimensionality of input                      default 2
-exp.batch_size = 250                    # int: Number of samples generated                  default 100
-exp.true_data_num = 12               # double: proportion of true model evaluated        default 0.3
-exp.n_iter = 25001                      # int: Number of iterations                         default 25000
-exp.lr = 0.0005                          # float: Learning rate                              default 0.003, Trivial 0.03
-exp.lr_decay = 0.9999                   # float: Learning rate decay                        default 0.9999, Trivial 0.9995
-exp.log_interval = 10                   # int: How often to show loss stat                  default 10
-exp.calibrate_interval = 250
-exp.budget = 1023
+exp.input_size          = 5                     # int: Dimensionality of input                      default 2
+exp.batch_size          = 250                   # int: Number of samples generated                  default 100
+exp.true_data_num       = 12                    # double: proportion of true model evaluated        default 2
+exp.n_iter              = 25001                 # int: Number of iterations                         default 25001
+exp.lr                  = 0.0005                # float: Learning rate                              default 0.003
+exp.lr_decay            = 0.9999                # float: Learning rate decay                        default 0.9999
+exp.log_interval        = 10                    # int: How often to show loss stat                  default 10
+exp.calibrate_interval  = 250                   # int: How often to update surrogate model          default 1000
+exp.budget              = 1023                  # int: Total number of true model evaluation
 
-exp.output_dir = './results/{}'.format(os.path.splitext(__file__)[0])
-exp.results_file = 'results.txt'
-exp.log_file = 'log.txt'
-exp.samples_file = 'samples.txt'
-# exp.seed = 645646846213854 # 4 x 4, 1000, 2
-# exp.seed = 3453454545 # RC, 8 x 8
-# exp.seed = 864853135135813 # RC, 4 x 4
-# exp.seed = 535438438 # RC, 4 x 4
-exp.seed = 35435
-exp.n_sample = 5000
-exp.no_cuda = True
+exp.output_dir          = './results/{}'.format(os.path.splitext(__file__)[0])
+exp.results_file        = 'results.txt'
+exp.log_file            = 'log.txt'
+exp.samples_file        = 'samples.txt'
+exp.seed                = 35435                 # int: Random seed used
+exp.n_sample            = 5000                  # int: Total number of iterations
+exp.no_cuda             = True
 
 # setup file ops
 if not os.path.isdir(exp.output_dir):
@@ -70,10 +66,6 @@ elif exp.flow_type == 'realnvp':  # Under construction
 else:
     raise ValueError('Unrecognized model.')
 
-
-# for name, param in model.named_parameters():
-#     print(name, param)
-
 model = model.to(device)
 optimizer = torch.optim.RMSprop(model.parameters(), lr=exp.lr)
 scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, exp.lr_decay)
@@ -82,33 +74,25 @@ scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, exp.lr_decay)
 test_mode = 'hidim'
 if test_mode == 'hidim':
     rt = Highdim()
-    rt.data = np.loadtxt('data_highdim.txt')
-    rt.surrogate.surrogate_load()
-    print(rt.surrogate.pre_grid)
-    print(rt.surrogate.pre_out)
-
+    rt.data = np.loadtxt('source/data/data_highdim.txt')
 elif test_mode == 'trivial':
     rt = circuitTrivial()
-    rt.data = np.loadtxt('data_trivial.txt')
-    rt.surrogate.surrogate_load()
-    print(rt.surrogate.pre_grid)
-    print(rt.surrogate.pre_out)
-
+    rt.data = np.loadtxt('source/data/data_trivial.txt')
 elif test_mode == 'RC':
     cycleTime = 1.07
     totalCycles = 10
-    forcing = np.loadtxt('inlet.flow')
+    forcing = np.loadtxt('source/data/inlet.flow')
     rt = rcModel(cycleTime, totalCycles, forcing)  # RC Model Defined
-    rt.data = np.loadtxt('data_rc.txt')
-    rt.surrogate.surrogate_load()
-
+    rt.data = np.loadtxt('source/data/data_rc.txt')
 elif test_mode == 'RCR':
     cycleTime = 1.07
     totalCycles = 10
-    forcing = np.loadtxt('inlet.flow')
+    forcing = np.loadtxt('source/data/inlet.flow')
     rt = rcrModel(cycleTime, totalCycles, forcing)  # RCR Model Defined
-    rt.data = np.loadtxt('data_rcr.txt')
-    rt.surrogate.surrogate_load()
+    rt.data = np.loadtxt('source/data/data_rcr.txt')
+else:
+    raise ValueError('Unrecognized task')
+rt.surrogate.surrogate_load()
 
 
 
@@ -118,8 +102,7 @@ for i in range(exp.n_iter):
     train(model, rt, optimizer, i, exp, loglist, True, True) # with surrogate
     # train(model, rt, optimizer, i, exp, loglist, True, False) # no surrogate
 
-
-rt.surrogate.surrogate_save()
+# rt.surrogate.surrogate_save() # Used for saving the resulting surrogate model
 np.savetxt(exp.output_dir + '/grid_trace.txt', rt.surrogate.grid_record.detach().numpy())
 np.savetxt(exp.output_dir + '/' + exp.log_file, np.array(loglist), newline="\n")
 print("%s seconds" % (time.time() - start_time))

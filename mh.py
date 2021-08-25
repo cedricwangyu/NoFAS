@@ -24,8 +24,8 @@ class MH():
         self.x0 = x0
         self.std = std
         self.max_sample = 10000
-        self.burn_in = 0.5
-        self.thinning = 0.5
+        self.burn_in = 0.1
+        self.thinning = 1000
 
     @property
     def jump_dist(self):
@@ -38,7 +38,7 @@ class MH():
         memory, x_curr, total, accept = [], self.x0.clone(), 0, torch.zeros(self.x0.size(0), 1)
         logp = self.logden(x_curr)
         for _ in tqdm.trange(self.max_sample):
-            for noise, judge in zip(self.jump_dist.sample([10]), torch.log(self.judge_dist.sample([10]))):
+            for noise, judge in zip(self.jump_dist.sample([self.thinning]), torch.log(self.judge_dist.sample([self.thinning]))):
                 x_prop, total = noise + x_curr, total + 1
                 logq = self.logden(x_prop)
                 judge_res = (torch.sum(torch.abs(x_prop) > 4, dim=1, keepdim=True) > 0) + (judge > (logq - logp)) == False
@@ -75,25 +75,24 @@ def MH_RC():
 
     cycleTime = 1.07
     totalCycles = 10
-    dataSize = 50  # number of observations
-    dataname = 'data_rc.txt'
-    forcing = np.loadtxt('inlet.flow')
+    dataname = 'source/data/data_rc.txt'
+    forcing = np.loadtxt('source/data/inlet.flow')
     rc = rcModel(cycleTime, totalCycles, forcing)
     rc.data = np.loadtxt(dataname)
-    # rc.surrogate.surrogate_load()
+    rc.surrogate.surrogate_load()
 
     mh = MH()
     mh.max_sample = 1000
     mh.burn_in = 0.1
-    mh.thinning = 1
-    mh.logden = lambda x: rc.den_t(x, surrogate=False)
+    mh.thinning = 1000
+    mh.logden = lambda x: rc.den_t(x, surrogate=True)
 
     mh.x0 = torch.Tensor([[0.0, 0.0],
                           [-4.0, -4.0]])
     mh.std = torch.Tensor([0.01, 0.1])
     raw = mh.sample()
     for i in range(mh.x0.size(0)):
-        directory = "result/RC_" + str(i)
+        directory = "results/RC_" + str(i)
         if not os.path.isdir(directory): os.makedirs(directory)
         np.savetxt(directory + '/raw_samples.txt', raw[:, i, :].detach().numpy())
         m = np.loadtxt(directory + '/raw_samples.txt')
@@ -108,33 +107,30 @@ def MH_RCR():
 
     cycleTime = 1.07
     totalCycles = 10
-    dataSize = 50  # number of observations
-    dataname = 'data_rcr.txt'
-    forcing = np.loadtxt('inlet.flow')
+    dataname = 'source/data/data_rcr.txt'
+    forcing = np.loadtxt('source/data/inlet.flow')
     rc = rcrModel(cycleTime, totalCycles, forcing)
     rc.data = np.loadtxt(dataname)
     rc.surrogate.surrogate_load()
 
     mh = MH()
-    mh.max_sample = 2000000
+    mh.max_sample = 1000
     mh.burn_in = 0.1
-    mh.thinning = 0.0005
+    mh.thinning = 2000
     mh.logden = lambda x: rc.den_t(x, surrogate=True)
-    # mh.x0 = torch.Tensor([[1.0, 0.5, -4.0]])
-    mh.x0 = torch.Tensor([[-4.0, -4.0, -4.0]])
-    mh.std = torch.Tensor([0.025, 0.025, 0.025])
 
-    directory = 'result/RCR_1'
-    if not os.path.isdir(directory): os.makedirs(directory)
-    mh.x0 = torch.Tensor([[0.0, 0.0, 0.0]])
+    mh.x0 = torch.Tensor([[-4.0, -4.0, -4.0],
+                          [0.0, 0.0, 0.0]])
     mh.std = torch.Tensor([0.025, 0.025, 0.025])
-    m = mh.sample()
-    np.savetxt(directory + '/rcr_mh.txt', m.detach().numpy())
-
-    m = np.loadtxt(directory + '/rcr_mh.txt')
-    m, acfs = mh.post_process(m)
-    np.savetxt(directory + '/samples25000', m)
-    np.savetxt(directory + '/RCR_acfs', acfs)
+    raw = mh.sample()
+    for i in range(mh.x0.size(0)):
+        directory = "results/RCR_" + str(i)
+        if not os.path.isdir(directory): os.makedirs(directory)
+        np.savetxt(directory + '/raw_samples.txt', raw[:, i, :].detach().numpy())
+        m = np.loadtxt(directory + '/raw_samples.txt')
+        m, acfs = mh.post_process(m)
+        np.savetxt(directory + '/samples.txt', m)
+        np.savetxt(directory + '/acfs.txt', acfs)
 
 def MH_Trivial(directory):
     seed = random.randint(1, 10 ** 9)
@@ -143,23 +139,27 @@ def MH_Trivial(directory):
 
     rt = circuitTrivial()
     rt.stdRatio = 0.05
-    dataName = 'data_trivial.txt'
+    dataName = 'source/data/data_trivial.txt'
     rt.data = np.loadtxt(dataName)
 
     mh = MH()
-    mh.max_sample = 2000000
+    mh.max_sample = 1000
     mh.burn_in = 0.1
-    mh.thinning = 0.001
+    mh.thinning = 1000
     mh.logden = lambda x: rt.den_t(x, surrogate=False)
-    mh.x0 = torch.Tensor([[5.5, 5.5]])
-    mh.std = torch.Tensor([0.01, 0.01])
-    m = mh.sample()
-    np.savetxt(directory + '/trivial_mh.txt', m.detach().numpy())
 
-    m = np.loadtxt(directory + '/trivial_mh.txt')
-    m, acfs = mh.post_process(m)
-    np.savetxt(directory + '/samples30000', m)
-    np.savetxt(directory + '/Trivial_acfs', acfs)
+    mh.x0 = torch.Tensor([[5.5, 5.5],
+                          [0.0, 0.0]])
+    mh.std = torch.Tensor([0.01, 0.01])
+    raw = mh.sample()
+    for i in range(mh.x0.size(0)):
+        directory = "results/Trivial_" + str(i)
+        if not os.path.isdir(directory): os.makedirs(directory)
+        np.savetxt(directory + '/raw_samples.txt', raw[:, i, :].detach().numpy())
+        m = np.loadtxt(directory + '/raw_samples.txt')
+        m, acfs = mh.post_process(m)
+        np.savetxt(directory + '/samples.txt', m)
+        np.savetxt(directory + '/acfs.txt', acfs)
 
 def MH_Hidim():
     seed = random.randint(1, 10 ** 9)
@@ -167,22 +167,19 @@ def MH_Hidim():
     torch.manual_seed(seed)
 
     hd = Highdim()
-    hd.data = np.loadtxt('data_highdim.txt')
-    hd.name = "hidim"
+    hd.data = np.loadtxt('source/data/data_highdim.txt')
 
     mh = MH()
-    mh.max_sample = 30
+    mh.max_sample = 1000
     mh.burn_in = 0.1
-    mh.thinning = 0.1
+    mh.thinning = 100000
     mh.logden = lambda x: hd.den_t(x, surrogate=False)
-
-
     mh.x0 = torch.Tensor([[3.0, 3.0, 3.0, 3.0, 3.0],
                           [-3.0, -3.0, -3.0, -3.0, -3.0]])
     mh.std = torch.Tensor([0.03, 0.03, 0.03, 0.03, 0.03])
     raw = mh.sample()
     for i in range(mh.x0.size(0)):
-        directory = "result/" + hd.name + "_" + str(i)
+        directory = "results/hidim_" + str(i)
         if not os.path.isdir(directory): os.makedirs(directory)
         np.savetxt(directory + '/raw_samples.txt', raw[:, i, :].detach().numpy())
         m = np.loadtxt(directory + '/raw_samples.txt')

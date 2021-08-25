@@ -1,10 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.distributions as D
-from torch.autograd import Variable
 import numpy as np
-import os.path
 from os import path
 
 torch.set_default_tensor_type(torch.DoubleTensor)
@@ -138,14 +135,14 @@ class Surrogate:
             optimizer.step()
 
             if i % record_interval == 0:
-                if reg: print('iter {}\t loss {}\t reg_loss {}'.format(i, loss, reg_loss))
-                else: print('iter {}   loss {}'.format(i, loss))
+                if reg:
+                    print('iter {}\t loss {}\t reg_loss {}'.format(i, loss, reg_loss))
+                else:
+                    print('iter {}   loss {}'.format(i, loss))
         if store: self.surrogate_save()
 
     def update(self, x, max_iters=10000, lr=0.01, lr_exp=0.999, record_interval=500, store=False, tol=1e-3, reg=False):
         self.grid_record = torch.cat((self.grid_record, x), dim=0)
-        # print(torch.std(x, dim=0))
-        # print(x[:, torch.Tensor([1, 0]) > 0.5])
         s = torch.std(x, dim=0)
         thresh = 0.1
         if torch.any(s < thresh):
@@ -170,9 +167,6 @@ class Surrogate:
             raw_loss = torch.stack([item.mean() for item in torch.split(torch.sum((y - out) ** 2, dim=1), sizes)])
             loss = raw_loss[0] * self.weights[:len(self.memory_grid)].sum() + torch.sum(
                 raw_loss[1:] * self.weights[:len(self.memory_grid)])
-            # loss, n = 0, 0
-            # for l in torch.split(torch.sum((y - out) ** 2, dim=1), sizes): loss, n = loss + l.sum(), n + l.size(0)
-            # loss /= n
             if reg:
                 for param in self.surrogate.parameters():
                     loss += torch.abs(param).sum() * 0.1

@@ -2,21 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.distributions as D
-# from torch.autograd import Variable
 import numpy as np
-
-# import matplotlib
-# matplotlib.use('Agg')
-# import matplotlib.pyplot as plt
-
-# import os
 import math
-# import argparse
-# import pprint
 import copy
-import time
-
-# from densities import analytic_2
 
 torch.set_default_tensor_type(torch.DoubleTensor)
 
@@ -351,6 +339,8 @@ def train(nf, model, optimizer, iteration, exp, log, sampling=True, update=True)
     nf.train()
     x0 = nf.base_dist.sample([exp.batch_size])
     xk, sum_log_abs_det_jacobians = nf(x0)
+
+    # generate samples on the way
     if sampling and iteration % 200 == 0:
         x00 = nf.base_dist.sample([exp.n_sample])
         xkk, _ = nf(x00)
@@ -362,6 +352,7 @@ def train(nf, model, optimizer, iteration, exp, log, sampling=True, update=True)
         np.savetxt(exp.output_dir + '/' + exp.log_file, np.array(log), newline="\n")
         exit(-1)
 
+    # updating surrogate model
     if iteration % exp.calibrate_interval == 0 and update and model.surrogate.grid_record.size(0) < exp.budget:
         xk0 = xk[:exp.true_data_num, :].data.clone()
         print("\n")
@@ -369,8 +360,8 @@ def train(nf, model, optimizer, iteration, exp, log, sampling=True, update=True)
         print(xk0)
         model.surrogate.update(xk0, max_iters=3000)
 
+    # Free energy bound
     loss = (- torch.sum(sum_log_abs_det_jacobians, 1) - model.den_t(xk)).mean()
-    # loss = (- torch.sum(sum_log_abs_det_jacobians, 1) - model.den_t(xk, surrogate=False)).mean()
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()

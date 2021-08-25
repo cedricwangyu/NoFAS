@@ -1,13 +1,10 @@
 # NoFAS:
 Variational Inference with NoFAS: Normalizing Flow with Adaptive Surrogate for Computationally Expensive Models
 
-Enabling MAF on Circuit Model RC and RCR (under construction) with PyTorch.
-
-
 ## Requirements:
-* PyTorch 1.5.0
+* PyTorch 1.4.0
 * Numpy 1.19.2
-* Scipy 1.5.2
+* Scipy 1.6.1
 
 ## Usage
 
