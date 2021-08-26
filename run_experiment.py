@@ -28,7 +28,7 @@ exp.batch_norm_order    = True                  # boo: Order to decide if batch_
 
 exp.input_size          = 5                     # int: Dimensionality of input                      default 2
 exp.batch_size          = 250                   # int: Number of samples generated                  default 100
-exp.true_data_num       = 12                    # double: proportion of true model evaluated        default 2
+exp.true_data_num       = 12                    # double: number of true model evaluated        default 2
 exp.n_iter              = 25001                 # int: Number of iterations                         default 25001
 exp.lr                  = 0.0005                # float: Learning rate                              default 0.003
 exp.lr_decay            = 0.9999                # float: Learning rate decay                        default 0.9999
