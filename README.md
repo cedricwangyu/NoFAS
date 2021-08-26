@@ -7,7 +7,7 @@ implemented by [Kamen Bliznashki](https://github.com/kamenbliznashki/normalizing
 The code includes four numerical experiments: closed form mapping, RC, RCR, and non-isomorphic Sobol function.
 RC and RCR are implemented by [the Schiavazzi Lab at the University of Notre Dame](https://github.com/desResLab/supplMatHarrod20).
 
-# Paper
+## Paper
 The methodology and the numerical examples are discussed in the paper:
 Y. Wang, F. Liu and D.E. Schiavazzi, *[Variational Inference with NoFAS: Normalizing Flow with Adaptive Surrogate for Computationally Expensive Models]()*
 
