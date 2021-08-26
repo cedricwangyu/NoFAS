@@ -1,4 +1,4 @@
-# NoFAS:
+# NoFAS
 Variational Inference with NoFAS: Normalizing Flow with Adaptive Surrogate for Computationally Expensive Models
 
 NoFAS estimates posterior distribution of hidden variables for a computationally expensive model with adaptive surrogate
