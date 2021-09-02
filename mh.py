@@ -88,7 +88,7 @@ def MH_RC():
     mh.x0 = torch.Tensor([[0.0, 0.0],
                           [-4.0, -4.0]])
     mh.std = torch.Tensor([0.01, 0.1])
-    raw = mh.sample()
+    with torch.no_grad(): raw = mh.sample()
     for i in range(mh.x0.size(0)):
         directory = "results/RC_" + str(i)
         if not os.path.isdir(directory): os.makedirs(directory)
@@ -120,7 +120,7 @@ def MH_RCR():
     mh.x0 = torch.Tensor([[-4.0, -4.0, -4.0],
                           [0.0, 0.0, 0.0]])
     mh.std = torch.Tensor([0.025, 0.025, 0.025])
-    raw = mh.sample()
+    with torch.no_grad(): raw = mh.sample()
     for i in range(mh.x0.size(0)):
         directory = "results/RCR_" + str(i)
         if not os.path.isdir(directory): os.makedirs(directory)
@@ -149,7 +149,7 @@ def MH_Trivial(directory):
     mh.x0 = torch.Tensor([[5.5, 5.5],
                           [0.0, 0.0]])
     mh.std = torch.Tensor([0.01, 0.01])
-    raw = mh.sample()
+    with torch.no_grad(): raw = mh.sample()
     for i in range(mh.x0.size(0)):
         directory = "results/Trivial_" + str(i)
         if not os.path.isdir(directory): os.makedirs(directory)
@@ -175,7 +175,7 @@ def MH_Hidim():
     mh.x0 = torch.Tensor([[3.0, 3.0, 3.0, 3.0, 3.0],
                           [-3.0, -3.0, -3.0, -3.0, -3.0]])
     mh.std = torch.Tensor([0.03, 0.03, 0.03, 0.03, 0.03])
-    raw = mh.sample()
+    with torch.no_grad(): raw = mh.sample()
     for i in range(mh.x0.size(0)):
         directory = "results/hidim_" + str(i)
         if not os.path.isdir(directory): os.makedirs(directory)
