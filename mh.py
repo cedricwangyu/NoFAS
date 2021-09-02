@@ -52,9 +52,7 @@ class MH():
     def post_process(self, m):
         print("Original Size: ", len(m))
         m = m[int(len(m) * self.burn_in):, :]
-        m = m[0:len(m):int(1 / self.thinning), :]
-        print("Burn_in: ", self.burn_in, "; Thinning: ", self.thinning)
-        print("After: ", len(m))
+        print("After Size: ", len(m))
         acfs = []
         for j in range(len(m[0])):
             acfs.append(acf(m[:, j], unbiased=True, nlags=20))
