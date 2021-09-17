@@ -9,7 +9,7 @@ RC and RCR are implemented by [the Schiavazzi Lab at the University of Notre Dam
 
 ## Paper
 The methodology and the numerical examples are discussed in the paper:
-Y. Wang, F. Liu and D.E. Schiavazzi, *[Variational Inference with NoFAS: Normalizing Flow with Adaptive Surrogate for Computationally Expensive Models]()*
+Y. Wang, F. Liu and D.E. Schiavazzi, *[Variational Inference with NoFAS: Normalizing Flow with Adaptive Surrogate for Computationally Expensive Models](https://arxiv.org/pdf/2108.12657.pdf)*
 
 ## Requirements:
 * PyTorch 1.4.0
