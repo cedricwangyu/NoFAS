@@ -17,7 +17,9 @@ torch.set_default_tensor_type(torch.DoubleTensor)
 from circuitModels import rcModel, rcrModel
 from TrivialModels import circuitTrivial
 from highdimModels import Highdim
-class MH():
+
+
+class MH:
     def __init__(self, logden=None, x0=None, std=None):
         self.logden = logden
         self.name = None
@@ -30,6 +32,7 @@ class MH():
     @property
     def jump_dist(self):
         return D.Normal(torch.zeros(self.x0.size(0), self.x0.size(1)), self.std.repeat(self.x0.size(0), 1))
+
     @property
     def judge_dist(self):
         return D.Uniform(torch.tensor([0.0]).repeat(self.x0.size(0), 1), torch.tensor([1.0]).repeat(self.x0.size(0), 1))
@@ -38,10 +41,13 @@ class MH():
         memory, x_curr, total, accept = [], self.x0.clone(), 0, torch.zeros(self.x0.size(0), 1)
         logp = self.logden(x_curr)
         for _ in tqdm.trange(self.max_sample):
-            for noise, judge in zip(self.jump_dist.sample([self.thinning]), torch.log(self.judge_dist.sample([self.thinning]))):
+            for noise, judge in zip(self.jump_dist.sample([self.thinning]),
+                                    torch.log(self.judge_dist.sample([self.thinning]))):
                 x_prop, total = noise + x_curr, total + 1
                 logq = self.logden(x_prop)
-                judge_res = (torch.sum(torch.abs(x_prop) > 4, dim=1, keepdim=True) > 0) + (judge > (logq - logp)) == False
+                # judge_res = (torch.sum(torch.abs(x_prop) > 4, dim=1, keepdim=True) > 0) + (
+                #             judge > (logq - logp)) == False
+                judge_res = judge < logq - logp
                 x_curr[judge_res.reshape(-1), :] = x_prop[judge_res.reshape(-1), :]
                 logp[judge_res.reshape(-1), :] = logq[judge_res.reshape(-1), :]
                 accept += judge_res
@@ -52,11 +58,14 @@ class MH():
     def post_process(self, m):
         print("Original Size: ", len(m))
         m = m[int(len(m) * self.burn_in):, :]
-        print("After Size: ", len(m))
+        # m = m[0:len(m):int(1 / self.thinning), :]
+        # print("Burn_in: ", self.burn_in, "; Thinning: ", self.thinning)
+        print("After: ", len(m))
         acfs = []
         for j in range(len(m[0])):
             acfs.append(acf(m[:, j], unbiased=True, nlags=20))
         return m, np.array(acfs)
+
     def gelman_rubin(self, x):
         M, N = x.size(0), x.size(1)
         mu_m = torch.mean(x, dim=1)
@@ -66,6 +75,7 @@ class MH():
         R = torch.sqrt(((N - 1) / N * W + (M + 1) / M / N * B) / W)
         return R, torch.cat([x[i] for i in range(x.size(0))], dim=0)
 
+
 def MH_RC():
     seed = random.randint(1, 10 ** 9)
     print(seed)
@@ -73,8 +83,8 @@ def MH_RC():
 
     cycleTime = 1.07
     totalCycles = 10
-    dataname = 'source/data/data_rc.txt'
-    forcing = np.loadtxt('source/data/inlet.flow')
+    dataname = 'data_rc.txt'
+    forcing = np.loadtxt('inlet.flow')
     rc = rcModel(cycleTime, totalCycles, forcing)
     rc.data = np.loadtxt(dataname)
     rc.surrogate.surrogate_load()
@@ -98,6 +108,7 @@ def MH_RC():
         np.savetxt(directory + '/samples.txt', m)
         np.savetxt(directory + '/acfs.txt', acfs)
 
+
 def MH_RCR():
     seed = random.randint(1, 10 ** 9)
     print(seed)
@@ -105,8 +116,8 @@ def MH_RCR():
 
     cycleTime = 1.07
     totalCycles = 10
-    dataname = 'source/data/data_rcr.txt'
-    forcing = np.loadtxt('source/data/inlet.flow')
+    dataname = 'data_rcr.txt'
+    forcing = np.loadtxt('inlet.flow')
     rc = rcrModel(cycleTime, totalCycles, forcing)
     rc.data = np.loadtxt(dataname)
     rc.surrogate.surrogate_load()
@@ -130,6 +141,7 @@ def MH_RCR():
         np.savetxt(directory + '/samples.txt', m)
         np.savetxt(directory + '/acfs.txt', acfs)
 
+
 def MH_Trivial(directory):
     seed = random.randint(1, 10 ** 9)
     print(seed)
@@ -137,7 +149,7 @@ def MH_Trivial(directory):
 
     rt = circuitTrivial()
     rt.stdRatio = 0.05
-    dataName = 'source/data/data_trivial.txt'
+    dataName = 'data_trivial.txt'
     rt.data = np.loadtxt(dataName)
 
     mh = MH()
@@ -159,13 +171,14 @@ def MH_Trivial(directory):
         np.savetxt(directory + '/samples.txt', m)
         np.savetxt(directory + '/acfs.txt', acfs)
 
+
 def MH_Hidim():
     seed = random.randint(1, 10 ** 9)
     print(seed)
     torch.manual_seed(seed)
 
     hd = Highdim()
-    hd.data = np.loadtxt('source/data/data_highdim.txt')
+    hd.data = np.loadtxt('data_highdim.txt')
 
     mh = MH()
     mh.max_sample = 1000
@@ -186,19 +199,16 @@ def MH_Hidim():
         np.savetxt(directory + '/acfs.txt', acfs)
 
 
-
 if __name__ == "__main__":
     # MH_Hidim()
     MH_RC()
     # MH_RCR()
 
-    # mh = MH()
+    mh = MH()
     # hd = Highdim()
-    # hd.data = np.loadtxt('data_highdim.txt')
-    # mh.logden = lambda x: hd.den_t(x, surrogate=False)
-    #
-    # s = torch.stack([torch.Tensor(np.loadtxt("hidim_MH/hidim_0/samples.txt")), torch.Tensor(np.loadtxt("hidim_MH/hidim_1/samples.txt"))],
-    #           dim = 0)
-    # R, s = mh.gelman_rubin(s)
-    # print(R)
-    # np.savetxt("samples.txt", s.detach().numpy())
+
+    s = torch.stack([torch.Tensor(np.loadtxt("results/RC_0/samples.txt")), torch.Tensor(np.loadtxt("results/RC_1/samples.txt"))],
+              dim = 0)
+    R, s = mh.gelman_rubin(s)
+    print(R)
+    np.savetxt("samples.txt", s.detach().numpy())
