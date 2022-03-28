@@ -36,11 +36,13 @@ class Surrogate:
         self.limits = limits
         self.pre_grid = None
         self.surrogate = FNN(input_size, output_size)
+        self.beta_0 = 0.5
+        self.beta_1 = 0.1
 
         self.memory_grid = []
         self.memory_out = []
         self.memory_len = memory_len
-        self.weights = torch.Tensor([np.exp(-0.1 * i) for i in range(memory_len)])
+        self.weights = torch.Tensor([np.exp(-self.beta_1 * i) for i in range(memory_len)])
         self.grid_record = None
 
     @property
@@ -141,7 +143,7 @@ class Surrogate:
                     print('iter {}   loss {}'.format(i, loss))
         if store: self.surrogate_save()
 
-    def update(self, x, max_iters=10000, lr=0.01, lr_exp=0.999, record_interval=500, store=False, tol=1e-3, reg=False):
+    def update(self, x, max_iters=10000, lr=0.01, lr_exp=0.999, record_interval=500, store=False, tol=1e-5, reg=False):
         self.grid_record = torch.cat((self.grid_record, x), dim=0)
         s = torch.std(x, dim=0)
         thresh = 0.1
@@ -165,8 +167,8 @@ class Surrogate:
             y = self.surrogate(torch.cat(((self.pre_grid - self.m) / self.sd, *self.memory_grid), dim=0))
             out = torch.cat(((self.pre_out - self.tm) / self.tsd, *self.memory_out), dim=0)
             raw_loss = torch.stack([item.mean() for item in torch.split(torch.sum((y - out) ** 2, dim=1), sizes)])
-            loss = raw_loss[0] * self.weights[:len(self.memory_grid)].sum() + torch.sum(
-                raw_loss[1:] * self.weights[:len(self.memory_grid)])
+            loss = raw_loss[0] * self.beta_0 + torch.sum(
+                raw_loss[1:] * self.weights[:len(self.memory_grid)]) / self.weights[:len(self.memory_grid)].sum() * (1 - self.beta_0)
             if reg:
                 for param in self.surrogate.parameters():
                     loss += torch.abs(param).sum() * 0.1
