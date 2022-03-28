@@ -109,14 +109,14 @@ if __name__ == '__main__':
     exp.seed = random.randint(0, 1e9)  # int: Random seed used
     exp.n_sample = 5000  # int: Total number of iterations
     exp.no_cuda = True
-    execute(exp, 0.5, 0.1)
-    # for trial in range(1, 11):
-    #     for i, beta_0 in enumerate([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]):
-    #         for j, beta_1 in enumerate([0.01, 0.1, 1.0, 10.0]):
-    #             exp.seed = random.randint(0, 1e9)
-    #             exp.output_dir = "./result/A" + str(i + 1) + "B" + str(j + 1) + "T" + str(trial) + "/"
-    #             execute(exp, beta_0, beta_1)
-    #
-    #             filelist = [f for f in os.listdir(exp.output_dir) if f not in ("grid_trace.txt", "log.txt", "samples25000")]
-    #             for f in filelist:
-    #                 os.remove(os.path.join(exp.output_dir, f))
+
+    for trial in range(1, 5):
+        for i, beta_0 in enumerate([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]):
+            for j, beta_1 in enumerate([0.01, 0.1, 1.0, 10.0]):
+                exp.seed = random.randint(0, 1e9)
+                exp.output_dir = "./result/A" + str(i + 1) + "B" + str(j + 1) + "T" + str(trial) + "/"
+                execute(exp, beta_0, beta_1)
+
+                filelist = [f for f in os.listdir(exp.output_dir) if f not in ("grid_trace.txt", "log.txt", "samples25000")]
+                for f in filelist:
+                    os.remove(os.path.join(exp.output_dir, f))
