@@ -51,8 +51,8 @@ class MaskedLinear(nn.Linear):
         super().__init__(input_size, n_outputs)
         # self.weight.data.fill_(1.00)
         # self.bias.data.fill_(0.00)
-        # self.weight.data.uniform_(0.9,1.1)
-        # self.bias.data.uniform_(-0.1,0.1)
+        # nn.init.kaiming_uniform_(self.weight, mode='fan_out', nonlinearity='relu')
+        # nn.init.kaiming_normal_(self.bias, mode='fan_out', nonlinearity='relu')
 
         self.register_buffer('mask', mask)
 
