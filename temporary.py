@@ -70,6 +70,7 @@ def execute(exp, beta_0=0.5, beta_1=0.1):
     rt.surrogate.surrogate_load()
     rt.surrogate.beta_0 = beta_0
     rt.surrogate.beta_1 = beta_1
+    rt.weights = torch.Tensor([np.exp(-rt.surrogate.beta_1 * ii) for ii in range(rt.surrogate.memory_len)])
 
     loglist = []
     for i in range(exp.n_iter):
@@ -110,17 +111,20 @@ if __name__ == '__main__':
     exp.n_sample = 5000  # int: Total number of iterations
     exp.no_cuda = True
 
-    for trial in range(1, 5):
+    for trial in range(1, 2):
         for i, beta_0 in enumerate([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]):
             for j, beta_1 in enumerate([0.01, 0.1, 1.0, 10.0]):
-                while True:
-                    try:
-                        exp.seed = random.randint(0, 1e9)
-                        exp.output_dir = "./result/A" + str(i + 1) + "B" + str(j + 1) + "T" + str(trial) + "/"
-                        execute(exp, beta_0, beta_1)
-                        break
-                    except:
-                        pass
+                try:
+                    exp.seed = random.randint(0, 1e9)
+                    exp.output_dir = "./result/A" + str(i + 1) + "B" + str(j + 1) + "T" + str(trial) + "/"
+                    execute(exp, beta_0, beta_1)
+                except:
+                    continue
+
+                # exp.seed = random.randint(0, 1e9)
+                # exp.output_dir = "./result/A" + str(i + 1) + "B" + str(j + 1) + "T" + str(trial) + "/"
+                # execute(exp, beta_0, beta_1)
+
 
                 filelist = [f for f in os.listdir(exp.output_dir) if
                             f not in ("grid_trace.txt", "log.txt", "samples25000")]
