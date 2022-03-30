@@ -5,9 +5,11 @@ import torch
 import numpy as np
 import scipy as sp
 from maf import MADE, MAF, RealNVP, train
+from FNN_surrogate_nested import Surrogate
 from TrivialModels import circuitTrivial
 from circuitModels import rcModel, rcrModel
 from highdimModels import Highdim
+
 
 print('--- Numpy Version: ', np.__version__)
 print('--- Scipy Version: ', sp.__version__)
@@ -19,7 +21,7 @@ torch.set_default_tensor_type(torch.DoubleTensor)
 # Settings
 
 
-def execute(exp, beta_0=0.5, beta_1=0.1):
+def execute(exp, beta_0=0.5, beta_1=0.1, memory_size=20):
     # setup file ops
     if not os.path.isdir(exp.output_dir):
         os.makedirs(exp.output_dir)
@@ -64,14 +66,15 @@ def execute(exp, beta_0=0.5, beta_1=0.1):
         totalCycles = 10
         forcing = np.loadtxt('source/data/inlet.flow')
         rt = rcrModel(cycleTime, totalCycles, forcing)  # RCR Model Defined
+        rt.surrogate = Surrogate("RCR", lambda x: rt.solve_t(rt.transform(x)), rt.numParam, rt.numOutputs,
+                                   torch.Tensor([[-7, 7], [-7, 7], [-7, 7]]), memory_size)
         rt.data = np.loadtxt('source/data/data_rcr.txt')
     else:
         raise ValueError('Unrecognized task')
     rt.surrogate.surrogate_load()
     rt.surrogate.beta_0 = beta_0
     rt.surrogate.beta_1 = beta_1
-    rt.weights = torch.Tensor([np.exp(-rt.surrogate.beta_1 * ii) for ii in range(rt.surrogate.memory_len)])
-
+    rt.surrogate.weights = torch.Tensor([np.exp(-rt.surrogate.beta_1 * ii) for ii in range(rt.surrogate.memory_len)])
     loglist = []
     for i in range(exp.n_iter):
         scheduler.step()
@@ -111,19 +114,20 @@ if __name__ == '__main__':
     exp.n_sample = 5000  # int: Total number of iterations
     exp.no_cuda = True
 
+
     for trial in range(1, 2):
         for i, beta_0 in enumerate([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]):
-            for j, beta_1 in enumerate([0.01, 0.1, 1.0, 10.0]):
+            for j, (memory_size, beta_1) in enumerate(zip([20, 20, 9, 2], [0.01, 0.1, 1.0, 10.0])):
                 try:
                     exp.seed = random.randint(0, 1e9)
                     exp.output_dir = "./result/A" + str(i + 1) + "B" + str(j + 1) + "T" + str(trial) + "/"
-                    execute(exp, beta_0, beta_1)
+                    execute(exp, beta_0, beta_1, memory_size)
                 except:
                     continue
 
                 # exp.seed = random.randint(0, 1e9)
                 # exp.output_dir = "./result/A" + str(i + 1) + "B" + str(j + 1) + "T" + str(trial) + "/"
-                # execute(exp, beta_0, beta_1)
+                # execute(exp, beta_0, beta_1, memory_size)
 
 
                 filelist = [f for f in os.listdir(exp.output_dir) if
