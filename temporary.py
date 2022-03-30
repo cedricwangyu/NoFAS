@@ -10,7 +10,6 @@ from TrivialModels import circuitTrivial
 from circuitModels import rcModel, rcrModel
 from highdimModels import Highdim
 
-
 print('--- Numpy Version: ', np.__version__)
 print('--- Scipy Version: ', sp.__version__)
 print('--- Torch Version: ', torch.__version__)
@@ -67,7 +66,7 @@ def execute(exp, beta_0=0.5, beta_1=0.1, memory_size=20):
         forcing = np.loadtxt('source/data/inlet.flow')
         rt = rcrModel(cycleTime, totalCycles, forcing)  # RCR Model Defined
         rt.surrogate = Surrogate("RCR", lambda x: rt.solve_t(rt.transform(x)), rt.numParam, rt.numOutputs,
-                                   torch.Tensor([[-7, 7], [-7, 7], [-7, 7]]), memory_size)
+                                 torch.Tensor([[-7, 7], [-7, 7], [-7, 7]]), memory_size)
         rt.data = np.loadtxt('source/data/data_rcr.txt')
     else:
         raise ValueError('Unrecognized task')
@@ -84,6 +83,24 @@ def execute(exp, beta_0=0.5, beta_1=0.1, memory_size=20):
     # rt.surrogate.surrogate_save() # Used for saving the resulting surrogate model
     np.savetxt(exp.output_dir + '/grid_trace.txt', rt.surrogate.grid_record.detach().numpy())
     np.savetxt(exp.output_dir + '/' + exp.log_file, np.array(loglist), newline="\n")
+
+
+def post_process(folder):
+    cycleTime = 1.07
+    totalCycles = 10
+    forcing = np.loadtxt('source/data/inlet.flow')
+    rt = rcrModel(cycleTime, totalCycles, forcing)
+    rt.data = np.loadtxt('source/data/data_rcr.txt')
+
+    params = torch.tensor(np.loadtxt(folder + "/samples25000"))
+    params = rt.transform(params)
+    np.savetxt(folder + "/RCR_MAF_Parameters.txt", params.detach().numpy())
+    print(params)
+    model_out = rt.solve_t(params)
+    res = torch.normal(0, 1, size=(params.size(0), 3))
+    res = model_out + 0.01 * torch.abs(rt.defOut[0]) * res
+    print(res)
+    np.savetxt(folder + "/RCR_MAF_Samples.txt", res.detach().numpy())
 
 
 if __name__ == '__main__':
@@ -114,23 +131,30 @@ if __name__ == '__main__':
     exp.n_sample = 5000  # int: Total number of iterations
     exp.no_cuda = True
 
+    execute(exp, 0.5, 0.1, 20)
+    post_process('./results')
+    # for trial in range(1, 2):
+    #     for i, beta_0 in enumerate([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]):
+    #         for j, (memory_size, beta_1) in enumerate(zip([20, 20, 9, 2], [0.01, 0.1, 1.0, 10.0])):
+    #             try:
+    #                 exp.seed = random.randint(0, 1e9)
+    #                 exp.output_dir = "./result/A" + str(i + 1) + "B" + str(j + 1) + "T" + str(trial) + "/"
+    #                 execute(exp, beta_0, beta_1, memory_size)
+    #             except:
+    #                 continue
+    #
+    #             # exp.seed = random.randint(0, 1e9)
+    #             # exp.output_dir = "./result/A" + str(i + 1) + "B" + str(j + 1) + "T" + str(trial) + "/"
+    #             # execute(exp, beta_0, beta_1, memory_size)
+    #
+    #
+    #             filelist = [f for f in os.listdir(exp.output_dir) if
+    #                         f not in ("grid_trace.txt", "log.txt", "samples25000")]
+    #             for f in filelist:
+    #                 os.remove(os.path.join(exp.output_dir, f))
 
-    for trial in range(1, 2):
-        for i, beta_0 in enumerate([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]):
-            for j, (memory_size, beta_1) in enumerate(zip([20, 20, 9, 2], [0.01, 0.1, 1.0, 10.0])):
-                try:
-                    exp.seed = random.randint(0, 1e9)
-                    exp.output_dir = "./result/A" + str(i + 1) + "B" + str(j + 1) + "T" + str(trial) + "/"
-                    execute(exp, beta_0, beta_1, memory_size)
-                except:
-                    continue
-
-                # exp.seed = random.randint(0, 1e9)
-                # exp.output_dir = "./result/A" + str(i + 1) + "B" + str(j + 1) + "T" + str(trial) + "/"
-                # execute(exp, beta_0, beta_1, memory_size)
-
-
-                filelist = [f for f in os.listdir(exp.output_dir) if
-                            f not in ("grid_trace.txt", "log.txt", "samples25000")]
-                for f in filelist:
-                    os.remove(os.path.join(exp.output_dir, f))
+    # for trial in range(1, 2):
+    #     for i, beta_0 in enumerate([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]):
+    #         for j, (memory_size, beta_1) in enumerate(zip([20, 20, 9, 2], [0.01, 0.1, 1.0, 10.0])):
+    #             folder = "./result/A" + str(i + 1) + "B" + str(j + 1) + "T" + str(trial)
+    #             post_process(folder)
