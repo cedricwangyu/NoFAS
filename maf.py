@@ -358,7 +358,7 @@ def train(nf, model, optimizer, iteration, exp, log, sampling=True, update=True)
         print("\n")
         print(list(model.surrogate.grid_record.size())[0])
         print(xk0)
-        model.surrogate.update(xk0, max_iters=3000)
+        model.surrogate.update(xk0, max_iters=6000)
 
     # Free energy bound
     loss = (- torch.sum(sum_log_abs_det_jacobians, 1) - model.den_t(xk)).mean()

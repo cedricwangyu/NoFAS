@@ -35,8 +35,8 @@ All experiments used RMSprop as the optimizer equipped exponential decay schedul
 maximum number of iterations is 25001. All MADE autoencoders contain 1 hidden layer with 100 nodes.
 
 | Experiment  | NF type | NF layers | batch size | budget | updating size | updating period | learning rate |
-| ----------- | ------- | --------- | ---------- | ------ | ------------- | --------------- | ------------- |
+| ----------- | ------- |-----------| ---------- | ------ | ------------- | --------------- | ------------- |
 | closed form | RealNVP | 5         | 200        | 64     | 2             | 1000            | 0.002         |
 | RC          | MAF     | 5         | 250        | 64     | 2             | 1000            | 0.003         |
-| RCR         | MAF     | 5         | 500        | 216    | 2             | 300             | 0.003         |
+| RCR         | MAF     | 15        | 500        | 216    | 2             | 300             | 0.003         |
 | 5-dim       | RealNVP | 15        | 250        | 1023   | 12            | 250             | 0.0005        |
