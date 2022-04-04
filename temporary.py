@@ -106,8 +106,8 @@ def post_process(folder):
 if __name__ == '__main__':
     exp = experiment()
     exp.flow_type = 'maf'  # str: Type of flow                                 default 'realnvp'
-    exp.n_blocks = 20  # int: Number of layers                             default 5
-    exp.hidden_size = 100  # int: Hidden layer size for MADE in each layer     default 100
+    exp.n_blocks = 64  # int: Number of layers                             default 5
+    exp.hidden_size = 32  # int: Hidden layer size for MADE in each layer     default 100
     exp.n_hidden = 1  # int: Number of hidden layers in each MADE         default 1
     exp.activation_fn = 'relu'  # str: Actication function used                     default 'relu'
     exp.input_order = 'sequential'  # str: Input order for create_mask                  default 'sequential'
@@ -133,7 +133,7 @@ if __name__ == '__main__':
     exp.n_sample = 5000  # int: Total number of iterations
     exp.no_cuda = True
 
-    num_trial = 20
+    num_trial = 75
     seeds = [random.randint(0, 1e9) for _ in range(num_trial)]
     for trial in range(1, num_trial+1):
         print(seeds)
@@ -144,6 +144,7 @@ if __name__ == '__main__':
             execute(exp, 0.5, 0.1, 20)
             post_process(exp.output_dir)
         except:
+            os.remove("./result/R_" + str(exp.seed))
             continue
 
         filelist = [f for f in os.listdir(exp.output_dir) if
