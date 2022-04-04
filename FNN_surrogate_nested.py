@@ -167,11 +167,11 @@ class Surrogate:
             y = self.surrogate(torch.cat(((self.pre_grid - self.m) / self.sd, *self.memory_grid), dim=0))
             out = torch.cat(((self.pre_out - self.tm) / self.tsd, *self.memory_out), dim=0)
             raw_loss = torch.stack([item.mean() for item in torch.split(torch.sum((y - out) ** 2, dim=1), sizes)])
-            # loss = raw_loss[0] * self.beta_0 + torch.sum(
-            #     raw_loss[1:] * self.weights[:len(self.memory_grid)]) / self.weights[:len(self.memory_grid)].sum() * (1 - self.beta_0)
+            loss = raw_loss[0] * 2 * self.beta_0 * self.weights[:len(self.memory_grid)].sum() + torch.sum(
+                raw_loss[1:] * self.weights[:len(self.memory_grid)]) * (1 - self.beta_0) * 2
 
-            loss = raw_loss[0] * self.weights[:len(self.memory_grid)].sum() + torch.sum(
-                raw_loss[1:] * self.weights[:len(self.memory_grid)])
+            # loss = raw_loss[0] * self.weights[:len(self.memory_grid)].sum() + torch.sum(
+            #     raw_loss[1:] * self.weights[:len(self.memory_grid)])
             if reg:
                 for param in self.surrogate.parameters():
                     loss += torch.abs(param).sum() * 0.1

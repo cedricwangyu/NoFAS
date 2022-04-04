@@ -177,8 +177,4 @@ if __name__ == '__main__':
                 for f in filelist:
                     os.remove(os.path.join(exp.output_dir, f))
 
-    # for trial in range(1, 2):
-    #     for i, beta_0 in enumerate([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]):
-    #         for j, (memory_size, beta_1) in enumerate(zip([20, 20, 9, 2], [0.01, 0.1, 1.0, 10.0])):
-    #             folder = "./result/A" + str(i + 1) + "B" + str(j + 1) + "T" + str(trial)
-    #             post_process(folder)
+
