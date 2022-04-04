@@ -144,7 +144,7 @@ if __name__ == '__main__':
             execute(exp, 0.5, 0.1, 20)
             post_process(exp.output_dir)
         except:
-            os.remove("./result/R_" + str(exp.seed))
+            os.remove(exp.output_dir)
             continue
 
         filelist = [f for f in os.listdir(exp.output_dir) if
