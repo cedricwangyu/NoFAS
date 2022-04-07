@@ -52,7 +52,7 @@ class MaskedLinear(nn.Linear):
         # self.weight.data.fill_(1.00)
         # self.bias.data.fill_(0.00)
         # nn.init.kaiming_uniform_(self.weight, mode='fan_out', nonlinearity='relu')
-        # nn.init.kaiming_normal_(self.bias, mode='fan_out', nonlinearity='relu')
+        # nn.init.kaiming_normal_(self.weight, mode='fan_out', nonlinearity='relu')
 
         self.register_buffer('mask', mask)
 
