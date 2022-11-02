@@ -128,9 +128,23 @@ if __name__ == '__main__':
     exp.log_file = 'log.txt'
     exp.samples_file = 'samples.txt'
     exp.seed = random.randint(0, 1e9)  # int: Random seed used
-    # print("Seed: ", exp.seed)
+    print("Seed: ", exp.seed)
     exp.n_sample = 5000  # int: Total number of iterations
     exp.no_cuda = True
+
+
+    # Single Run
+    # exp.output_dir = "./results/" + str(exp.seed) + "/"
+    # execute(exp, 0.5, 0.1, 20)
+    # post_process(exp.output_dir)
+    # filelist = [f for f in os.listdir(exp.output_dir) if
+    #             f not in ("grid_trace.txt",
+    #                       "log.txt",
+    #                       "samples25000",
+    #                       "RCR_MAF_Parameters.txt",
+    #                       "RCR_MAF_Samples.txt")]
+    # for f in filelist:
+    #     os.remove(os.path.join(exp.output_dir, f))
 
     # num_trial = 40
     # seeds = [random.randint(0, 1e9) for _ in range(num_trial)]
@@ -177,23 +191,24 @@ if __name__ == '__main__':
     #             for f in filelist:
     #                 os.remove(os.path.join(exp.output_dir, f))
 
-    # for trial in range(1, 11):
-    for trial in [5, 7]:
-        exp.output_dir = "./results/kaiming_normal/" + str(trial) + "/"
-        exp.seed = random.randint(0, 1e9)
-        try:
-            execute(exp, 0.5, 0.1, 20)
-            post_process(exp.output_dir)
-            filelist = [f for f in os.listdir(exp.output_dir) if
-                        f not in ("grid_trace.txt",
-                                  "log.txt",
-                                  "samples25000",
-                                  "RCR_MAF_Parameters.txt",
-                                  "RCR_MAF_Samples.txt")]
-            for f in filelist:
-                os.remove(os.path.join(exp.output_dir, f))
-        except:
-            continue
+
+    # for batch in [1000, 200, 900, 300, 800, 400, 700, 500, 600]:
+    #     exp.output_dir = "./results/batch_" + str(batch) + "/"
+    #     exp.seed = 735792989
+    #     exp.batch_size = batch
+    #     try:
+    #         execute(exp, 0.5, 0.1, 20)
+    #         post_process(exp.output_dir)
+    #         filelist = [f for f in os.listdir(exp.output_dir) if
+    #                     f not in ("grid_trace.txt",
+    #                               "log.txt",
+    #                               "samples25000",
+    #                               "RCR_MAF_Parameters.txt",
+    #                               "RCR_MAF_Samples.txt")]
+    #         for f in filelist:
+    #             os.remove(os.path.join(exp.output_dir, f))
+    #     except:
+    #         continue
 
 
 
