@@ -19,24 +19,24 @@ start_time = time.time()
 # Settings
 exp = experiment()
 exp.flow_type           = 'maf'             # str: Type of flow                                 default 'realnvp'
-exp.n_blocks            = 5                    # int: Number of layers                             default 5
+exp.n_blocks            = 15                    # int: Number of layers                             default 5
 exp.hidden_size         = 100                   # int: Hidden layer size for MADE in each layer     default 100
 exp.n_hidden            = 1                     # int: Number of hidden layers in each MADE         default 1
 exp.activation_fn       = 'relu'                # str: Actication function used                     default 'relu'
 exp.input_order         = 'sequential'          # str: Input order for create_mask                  default 'sequential'
 exp.batch_norm_order    = True                  # boo: Order to decide if batch_norm is used        default True
 
-exp.input_size          = 2                     # int: Dimensionality of input                      default 2
-exp.batch_size          = 250                   # int: Number of samples generated                  default 100
+exp.input_size          = 3                     # int: Dimensionality of input                      default 2
+exp.batch_size          = 500                   # int: Number of samples generated                  default 100
 exp.true_data_num       = 2                     # double: number of true model evaluated        default 2
 exp.n_iter              = 25001                 # int: Number of iterations                         default 25001
 exp.lr                  = 0.003                # float: Learning rate                              default 0.003
 exp.lr_decay            = 0.9999                # float: Learning rate decay                        default 0.9999
 exp.log_interval        = 10                    # int: How often to show loss stat                  default 10
-exp.calibrate_interval  = 1000                   # int: How often to update surrogate model          default 1000
-exp.budget              = 64                  # int: Total number of true model evaluation
+exp.calibrate_interval  = 300                   # int: How often to update surrogate model          default 1000
+exp.budget              = 216                  # int: Total number of true model evaluation
 
-exp.output_dir          = './results/{}'.format(os.path.splitext(__file__)[0])
+exp.output_dir          = './results'
 exp.results_file        = 'results.txt'
 exp.log_file            = 'log.txt'
 exp.samples_file        = 'samples.txt'
@@ -71,7 +71,7 @@ optimizer = torch.optim.RMSprop(model.parameters(), lr=exp.lr)
 scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, exp.lr_decay)
 
 
-test_mode = 'RC'
+test_mode = 'RCR'
 if test_mode == 'hidim':
     rt = Highdim()
     rt.data = np.loadtxt('source/data/data_highdim.txt')
@@ -105,4 +105,7 @@ for i in range(exp.n_iter):
 # rt.surrogate.surrogate_save() # Used for saving the resulting surrogate model
 np.savetxt(exp.output_dir + '/grid_trace.txt', rt.surrogate.grid_record.detach().numpy())
 np.savetxt(exp.output_dir + '/' + exp.log_file, np.array(loglist), newline="\n")
+params = rt.transform(torch.Tensor(np.loadtxt(exp.output_dir + "/samples" + str(exp.n_iter-1))))
+np.savetxt(exp.output_dir + "/params_nofas.txt", params.detach().cpu().numpy())
+np.savetxt(exp.output_dir + '/out_nofas.txt', (rt.solve_t(params) + torch.abs(rt.defOut) * rt.stdRatio * torch.normal(0, 1, size=[params.size(0), params.size(1)])).detach().cpu().numpy())
 print("%s seconds" % (time.time() - start_time))
